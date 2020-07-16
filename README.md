@@ -11,7 +11,6 @@ blocked from the server's admin panel.
   A channel, when active, is handled by a single thread, which loops through a list of
 all the users using that particular channel, and broadcast any message that isn't a 
 special query to all the users of the channel. This reduces overhead when many users
-are connected to different channels since only a thread is required to handle a chann-
-el.
+are connected to different channels since only a thread is required to handle a channel.
   
                                                                   Author: Umar Abdul
