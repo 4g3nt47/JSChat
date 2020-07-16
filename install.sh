@@ -7,4 +7,4 @@ echo "Cleaning up..."
 rm com -rf
 rm *.class
 echo "JSChat compiled successfully!"
-echo "To launch, execute: java -jar jschar.jar"
+echo "To launch, execute: java -jar jschat.jar"
