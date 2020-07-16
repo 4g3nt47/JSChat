@@ -22,4 +22,4 @@ are connected to different channels since only a thread is required to handle a 
    $ java -jar jschat.jar
 
   
-                                                                  Author: Umar Abdul
+                                                                 Author: Umar Abdul
