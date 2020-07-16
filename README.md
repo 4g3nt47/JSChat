@@ -13,13 +13,13 @@ all the users using that particular channel, and broadcast any message that isn'
 special query to all the users of the channel. This reduces overhead when many users
 are connected to different channels since only a thread is required to handle a channel.
 
-  To build from source;
+To build from source;
 
-   $ git clone https://github.com/UmarAbdul01/JSChat.git
-   $ cd JSChat
-   $ chmod +x install.sh
-   $ ./install.sh
-   $ java -jar jschat.jar
-
-  
+-  $ git clone https://github.com/UmarAbdul01/JSChat.git
+-  $ cd JSChat
+-  $ chmod +x install.sh
+-  $ ./install.sh
+-  $ java -jar jschat.jar
+ 
                                                                   Author: Umar Abdul
+                                                                  
