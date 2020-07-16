@@ -15,22 +15,10 @@ are connected to different channels since only a thread is required to handle a 
 
 To build from source;
 
-<<<<<<< HEAD
--  $ git clone https://github.com/UmarAbdul01/JSChat.git
--  $ cd JSChat
--  $ chmod +x install.sh
--  $ ./install.sh
--  $ java -jar jschat.jar
+1.  $ git clone https://github.com/UmarAbdul01/JSChat.git
+2.  $ cd JSChat
+3.  $ chmod +x install.sh
+4.  $ ./install.sh
+5.  $ java -jar jschat.jar
  
                                                                   Author: Umar Abdul
-                                                                  
-=======
-   $ git clone https://github.com/UmarAbdul01/JSChat.git
-   $ cd JSChat
-   $ chmod +x install.sh
-   $ ./install.sh
-   $ java -jar jschat.jar
-
-  
-                                                                 Author: Umar Abdul
->>>>>>> d4371724494925bdeaadf9ceb2023c377b6d2c9f
