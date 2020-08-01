@@ -28,6 +28,7 @@ public class JSChatClient extends JFrame implements ActionListener, Runnable{
   private JTextField portField;
   private JTextField usernameField;
   private JTextField channelField;
+  private JPasswordField channelPasswd;
   private String host;
   private int port;
   private String username;
@@ -71,6 +72,7 @@ public class JSChatClient extends JFrame implements ActionListener, Runnable{
     hostField = new JTextField(15);
     portField = new JTextField(15);
     channelField = new JTextField(15);
+    channelPasswd = new JPasswordField(15);
     usernameField = new JTextField(15);
     connectBtn = new JButton("Connect");
     connectBtn.addActionListener(new ConnListener());
@@ -82,7 +84,7 @@ public class JSChatClient extends JFrame implements ActionListener, Runnable{
       }
     });
 
-    GridLayout grid = new GridLayout(4, 2);
+    GridLayout grid = new GridLayout(5, 2);
     grid.setVgap(2);
     grid.setHgap(1);
     JPanel fieldsPanel = new JPanel(grid);
@@ -95,6 +97,8 @@ public class JSChatClient extends JFrame implements ActionListener, Runnable{
     fieldsPanel.add(usernameField);
     fieldsPanel.add(new JLabel("Channel name:"));
     fieldsPanel.add(channelField);
+    fieldsPanel.add(new JLabel("Channel Password:"));
+    fieldsPanel.add(channelPasswd);
     
     JPanel buttonsPanel = new JPanel();
     buttonsPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
@@ -168,7 +172,10 @@ public class JSChatClient extends JFrame implements ActionListener, Runnable{
         clientObj = new Client(conn);
         clientObj.setTimeout(5000);
         notification.setText("Authenticating...");
-        clientObj.send(String.format("%s<<>>%s", username, channel));
+        String channelPass = String.valueOf(channelPasswd.getPassword());
+        if (channelPass.length() == 0)
+          channelPass = "null";
+        clientObj.send(String.format("%s<<>>%s<<>>%s", username, channel, channelPass));
         String rsp = clientObj.receive();
         if (rsp == null){
           clientObj.close();

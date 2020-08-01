@@ -24,7 +24,6 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
   private JTextField hostField;
   private JTextField portField;
   private JTextField channelAddField;
-  private JTextField channelDeleteField;
   private JTextField blockUserField;
   private JTextField unblockUserField;
   private JLabel channelCountLabel;
@@ -32,10 +31,10 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
   private JLabel blockCountLabel;
   private JButton serverBtn;
   private JButton addChannelBtn;
-  private JButton deleteChannelBtn;
   private JButton showBlockUserBtn;
   private JButton unblockUserBtn;
   private JButton channelsBtn;
+  private JButton manageChannelsBtn;
   private JButton quitBtn;
   private JButton blockUserBtn;
   private JButton saveConfigBtn;
@@ -49,6 +48,7 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
   private int clientsCount = 0;
   private ArrayList<String> handledChannels;
   private HashMap<String, ArrayList<String>> channelBroadcast;
+  private HashMap<String, String> channelPasswords;
 
   // Constants.
   public static final int MIN_USERNAME_LENGTH = 3; // minimum number of characters in a username.
@@ -67,6 +67,7 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
     channels = new HashMap<String, ArrayList<Client>>();
     handledChannels = new ArrayList<String>();
     channelBroadcast = new HashMap<String, ArrayList<String>>();
+    channelPasswords = new HashMap<String, String>();
     blockedUsers = new ArrayList<String>();
     setDefaultCloseOperation(EXIT_ON_CLOSE);
   }
@@ -82,7 +83,6 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
     hostField.setText("localhost");
     portField.setText("4444");
     channelAddField = new JTextField(15);
-    channelDeleteField = new JTextField(15);
     blockUserField = new JTextField(15);
     unblockUserField = new JTextField(15);
     channelCountLabel = new JLabel("0");
@@ -90,10 +90,10 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
     blockCountLabel = new JLabel("0");
     serverBtn = new JButton("Start");
     addChannelBtn = new JButton("Add channel");
-    deleteChannelBtn = new JButton("Delete channel");
     blockUserBtn = new JButton("Block user");
     unblockUserBtn = new JButton("Unblock user");
     channelsBtn = new JButton("Show channels");
+    manageChannelsBtn = new JButton("Manage channels");
     quitBtn = new JButton("Quit");
     showBlockUserBtn = new JButton("Blocked users");
     saveConfigBtn = new JButton("Save config");
@@ -101,11 +101,11 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
     quitBtn.addActionListener(this);
     serverBtn.addActionListener(this);
     addChannelBtn.addActionListener(this);
-    deleteChannelBtn.addActionListener(this);
     blockUserBtn.addActionListener(this);
     showBlockUserBtn.addActionListener(this);
     unblockUserBtn.addActionListener(this);
     channelsBtn.addActionListener(this);
+    manageChannelsBtn.addActionListener(this);
     saveConfigBtn.addActionListener(this);
     loadConfigBtn.addActionListener(this);
     notification = new JLabel(" ");
@@ -114,7 +114,7 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
     mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
     mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 10, 10, 10));
 
-    GridLayout grid = new GridLayout(9, 2);
+    GridLayout grid = new GridLayout(8, 2);
     grid.setVgap(2);
     grid.setHgap(4);
     JPanel fieldsPanel = new JPanel(grid);
@@ -124,8 +124,6 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
     fieldsPanel.add(portField);
     fieldsPanel.add(addChannelBtn);
     fieldsPanel.add(channelAddField);
-    fieldsPanel.add(deleteChannelBtn);
-    fieldsPanel.add(channelDeleteField);
     fieldsPanel.add(blockUserBtn);
     fieldsPanel.add(blockUserField);
     fieldsPanel.add(unblockUserBtn);
@@ -137,12 +135,13 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
     fieldsPanel.add(new JLabel("Blocked users:"));
     fieldsPanel.add(blockCountLabel);
 
-    GridLayout grid2 = new GridLayout(6, 1);
+    GridLayout grid2 = new GridLayout(7, 1);
     grid2.setVgap(8);
     JPanel buttonPanel = new JPanel(grid2);
     buttonPanel.setBorder(BorderFactory.createEmptyBorder(15, 80, 5, 80));
     buttonPanel.add(serverBtn);
     buttonPanel.add(channelsBtn);
+    buttonPanel.add(manageChannelsBtn);
     buttonPanel.add(showBlockUserBtn);
     buttonPanel.add(loadConfigBtn);
     buttonPanel.add(saveConfigBtn);
@@ -155,7 +154,7 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
     mainPanel.add(notePanel);
 
     getContentPane().add(BorderLayout.CENTER, mainPanel);
-    setBounds(300, 60, 350, 250);
+    setBounds(300, 20, 350, 250);
     pack();
     setResizable(false);
     setVisible(true);
@@ -222,21 +221,8 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
       }
       channels.put(name, new ArrayList<Client>());
       notification.setText("Channel created!");
+      channelPasswords.put(name, "null");
       channelAddField.setText("");
-    }else if (src == deleteChannelBtn){ // Delete an existing channel.
-      channelDeleteField.requestFocus();
-      String name = channelDeleteField.getText().trim();
-      if (name.length() == 0){
-        notification.setText("Channel name required!");
-        return;
-      }
-      if (!(channels.containsKey(name))){
-        notification.setText("Given channel does not exist!");
-        return;
-      }
-      deleteChannel(name);
-      notification.setText("Channel and it's users deleted!");
-      channelDeleteField.setText("");
     }else if (src == blockUserBtn){ // Add a username to block list.
       blockUserField.requestFocus();
       String username = blockUserField.getText().trim();
@@ -271,6 +257,11 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
         return;
       }
       showChannels();
+    }else if (src == manageChannelsBtn){ // Manage available channels.
+      if (channels.size() != 0)
+        new ChannelManager();
+      else
+        notification.setText("No channel available!");
     }else if (src == showBlockUserBtn){ // Create a window listing blocked users.
       if (blockedUsers.size() == 0){
         notification.setText("Block list is empty!");
@@ -294,7 +285,7 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
         BufferedWriter writer = new BufferedWriter(new FileWriter(file));
         writer.write(String.format("Host:%s\nPort:%s\n", hostField.getText().trim(), portField.getText().trim()));
         for (String ch : channels.keySet())
-          writer.write(String.format("Channel:%s\n", ch));
+          writer.write(String.format("Channel:%s<<>>%s\n", ch, channelPasswords.get(ch)));
         for (String bl : blockedUsers)
           writer.write(String.format("Blocked:%s\n", bl));
         writer.close();
@@ -315,7 +306,6 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
       hostField.setText("");
       portField.setText("");
       channelAddField.setText("");
-      channelDeleteField.setText("");
       blockUserField.setText("");
       unblockUserField.setText("");
       channels.clear();
@@ -330,9 +320,13 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
           }else if (data[0].equals("Port")){
             portField.setText(data[1].trim());
           }else if (data[0].equals("Channel")){
-            String cname = data[1].trim();
-            if (cname.length() >= MIN_CHANNEL_LENGTH && cname.length() <= MAX_CHANNEL_LENGTH && isAlphaNum(cname))
+            String[] channelData = data[1].trim().split("<<>>");
+            String cname = channelData[0];
+            String cpass = channelData[1];
+            if (cname.length() >= MIN_CHANNEL_LENGTH && cname.length() <= MAX_CHANNEL_LENGTH && isAlphaNum(cname)){
               channels.put(cname, new ArrayList<Client>());
+              channelPasswords.put(cname, cpass);
+            }
           }else if (data[0].equals("Blocked")){
             blockedUsers.add(data[1].trim());
           }
@@ -379,6 +373,7 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
   public void deleteChannel(String name){
 
     ArrayList<Client> clients = channels.remove(name);
+    channelPasswords.remove(name);
     for (Client client : clients){
       client.close();
     }
@@ -559,8 +554,13 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
       }
       try{
         String params[] = data.split("<<>>");
+        if (params.length != 3){
+          client.close();
+          return;
+        }
         String username = params[0].trim();
         String channel = params[1].trim();
+        String password = params[2].trim();
         if (!(channels.containsKey(channel))){
           client.send("Invalid channel!");
           client.close();
@@ -575,6 +575,14 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
           client.send("Username taken/invalid");
           client.close();
           return;
+        }
+        String orgPass = channelPasswords.get(channel);
+        if (orgPass != null && orgPass.length() != 0){
+          if (!(orgPass.equals(password))){
+            client.send("Authentication failed!");
+            client.close();
+            return;
+          }
         }
         client.setLoginTime(System.currentTimeMillis());
         client.setUsername(username);
@@ -660,6 +668,123 @@ public class JSChatServer extends JFrame implements ActionListener, Runnable{
               r.send(msg);
           }
         }
+      }
+    }
+  }
+
+  /**
+  * A window for managing channels.
+  */
+  public class ChannelManager implements ActionListener{
+
+    private JButton deleteBtn;
+    private JButton passwdBtn;
+    private JButton closeBtn;
+    private JTextField passwdField;
+    private JComboBox<String> channelsCombo;
+    private boolean pauseComboListener = false;
+    private JFrame frame;
+
+    public ChannelManager(){
+
+      frame = new JFrame("Channels - JSChat");
+      JPanel mainPanel = new JPanel();
+      mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+      mainPanel.setBorder(BorderFactory.createEmptyBorder(30, 20, 20, 20));
+      passwdBtn = new JButton("Set password");
+      deleteBtn = new JButton("Delete");
+      closeBtn = new JButton("Close");
+      passwdField = new JTextField(10);
+      channelsCombo = new JComboBox<String>();
+      JPanel comboPanel = new JPanel();
+      comboPanel.add(new JLabel("Channel:"));
+      if (channels.size() == 0){
+        passwdBtn.setEnabled(false);
+      }else{
+        for (String c : channels.keySet())
+          channelsCombo.addItem(c);
+      }
+      passwdBtn.setEnabled(true);
+
+      channelsCombo.addActionListener(new ActionListener(){
+        
+        @Override
+        public void actionPerformed(ActionEvent event){
+
+          if (pauseComboListener)
+            return;
+          String cname = (String)channelsCombo.getSelectedItem();
+          if (cname == null)
+            return;
+          if (!(channels.containsKey(cname))){
+            passwdBtn.setEnabled(false);
+            deleteBtn.setEnabled(false);
+            return;
+          }
+          passwdBtn.setEnabled(true);
+          deleteBtn.setEnabled(true);
+          String currPass = channelPasswords.get(cname);
+          passwdField.setText(currPass);
+          passwdField.requestFocus();
+        }
+      });
+      comboPanel.add(channelsCombo);
+      passwdBtn.addActionListener(this);
+      deleteBtn.addActionListener(this);
+      closeBtn.addActionListener(this);
+
+      JPanel passwdPanel = new JPanel();
+      passwdPanel.add(passwdField);
+      passwdPanel.add(passwdBtn);
+      JPanel btnPanel = new JPanel();
+      btnPanel.add(deleteBtn);
+      btnPanel.add(closeBtn);
+
+      mainPanel.add(comboPanel);
+      mainPanel.add(passwdPanel);
+      mainPanel.add(btnPanel);
+      passwdField.requestFocus();
+
+      frame.getContentPane().add(BorderLayout.CENTER, mainPanel);
+      frame.getRootPane().setDefaultButton(passwdBtn);
+      frame.setBounds(300, 100, 300, 300);
+      frame.pack();
+      frame.setResizable(false);
+      frame.setVisible(true);
+
+      String cname = (String)channelsCombo.getSelectedItem();
+      if (cname != null){
+        String passwd = channelPasswords.get(cname);
+        passwdField.setText(passwd);
+      }
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent event){
+    
+      JButton src = (JButton)event.getSource();
+      String channelName = (String)channelsCombo.getSelectedItem();
+      if (channelName == null && src != closeBtn)
+        return;
+      if (src == closeBtn){
+        updateCountLabels();
+        frame.setVisible(false);
+      }else if (src == passwdBtn){
+        String passwd = (String)passwdField.getText();
+        channelPasswords.put(channelName, passwd);
+      }else if (src == deleteBtn){
+        pauseComboListener = true;
+        deleteChannel(channelName);
+        channelsCombo.removeAllItems();
+        for (String s : channels.keySet())
+          channelsCombo.addItem(s);
+        if (channels.size() == 0)
+          frame.setVisible(false);
+        updateCountLabels();
+        channelName = (String)channelsCombo.getSelectedItem();
+        if (channelName != null)
+          passwdField.setText(channelPasswords.get(channelName));
+        pauseComboListener = false;
       }
     }
   }
